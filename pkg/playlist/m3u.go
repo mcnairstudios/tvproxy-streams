@@ -10,7 +10,9 @@ import (
 )
 
 func sanitizeTag(s string) string {
-	return strings.ReplaceAll(s, `"`, "'")
+	s = strings.ReplaceAll(s, `"`, "'")
+	s = strings.ReplaceAll(s, ",", ";")
+	return s
 }
 
 func ServeM3U(items []scanner.MediaItem, probeCache *probe.Cache, baseURL string, w http.ResponseWriter) {
