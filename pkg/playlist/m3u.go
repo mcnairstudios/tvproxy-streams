@@ -91,7 +91,7 @@ func ServeM3U(items []scanner.MediaItem, probeCache *probe.Cache, baseURL string
 					}
 					trackParts = append(trackParts, part)
 				}
-				tags = append(tags, fmt.Sprintf(`tvp-audio-tracks="%s"`, strings.Join(trackParts, ",")))
+				tags = append(tags, fmt.Sprintf(`tvp-audio-tracks="%s"`, strings.Join(trackParts, "|")))
 			}
 		}
 
