@@ -222,6 +222,7 @@ func runServer(configDir string) {
 	}
 
 	probeCache := probe.NewCache(probeDir)
+	defer probeCache.Close()
 	lib := &Library{
 		roots:      roots,
 		probeCache: probeCache,

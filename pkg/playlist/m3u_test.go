@@ -13,7 +13,8 @@ func TestServeM3UMovie(t *testing.T) {
 	items := []scanner.MediaItem{
 		{Type: scanner.TypeMovie, Path: "movies/Film.mp4", Name: "Film", Group: "Movies", Filename: "Film.mp4"},
 	}
-	cache := probe.NewCache("")
+	cache := probe.NewCache(t.TempDir())
+	defer cache.Close()
 	w := httptest.NewRecorder()
 	ServeM3U(items, cache, "http://localhost:8090", w)
 
@@ -35,9 +36,9 @@ func TestServeM3UMovie(t *testing.T) {
 	if !strings.Contains(body, "/stream/"+id) {
 		t.Error("stream URL should use tvp-id")
 	}
-	// EXTINF should not have bare display name after comma
-	if strings.Contains(body, ",Film\n") {
-		t.Error("EXTINF should not have bare display name after comma")
+	// EXTINF should end with ,DisplayName per M3U convention
+	if !strings.Contains(body, ",Film\n") {
+		t.Error("EXTINF should have display name after comma")
 	}
 	if !strings.Contains(body, `tvg-name="Film"`) {
 		t.Error("missing tvg-name")
@@ -48,7 +49,8 @@ func TestServeM3USeries(t *testing.T) {
 	items := []scanner.MediaItem{
 		{Type: scanner.TypeSeries, Path: "tv/Show/S01/ep.mkv", Name: "Pilot", Series: "Show", Season: 1, Episode: 1, Filename: "ep.mkv"},
 	}
-	cache := probe.NewCache("")
+	cache := probe.NewCache(t.TempDir())
+	defer cache.Close()
 	w := httptest.NewRecorder()
 	ServeM3U(items, cache, "http://localhost:8090", w)
 
@@ -78,7 +80,8 @@ func TestServeM3UTags(t *testing.T) {
 	items := []scanner.MediaItem{
 		{Type: scanner.TypeMovie, Path: "movies/SciFi/Film.mp4", Name: "Film", Group: "Movies", Tags: []string{"SciFi"}, Filename: "Film.mp4"},
 	}
-	cache := probe.NewCache("")
+	cache := probe.NewCache(t.TempDir())
+	defer cache.Close()
 	w := httptest.NewRecorder()
 	ServeM3U(items, cache, "http://localhost:8090", w)
 
@@ -92,7 +95,8 @@ func TestServeM3UCollection(t *testing.T) {
 	items := []scanner.MediaItem{
 		{Type: scanner.TypeMovie, Path: "movies/Trilogy/Film1.mp4", Name: "Film One", Group: "Trilogy", Collection: "Trilogy", Filename: "Film1.mp4"},
 	}
-	cache := probe.NewCache("")
+	cache := probe.NewCache(t.TempDir())
+	defer cache.Close()
 	w := httptest.NewRecorder()
 	ServeM3U(items, cache, "http://localhost:8090", w)
 

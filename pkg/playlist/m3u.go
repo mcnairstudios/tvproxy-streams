@@ -95,7 +95,7 @@ func ServeM3U(items []scanner.MediaItem, probeCache *probe.Cache, baseURL string
 			}
 		}
 
-		fmt.Fprintf(w, "#EXTINF:-1 %s\n", strings.Join(tags, " "))
+		fmt.Fprintf(w, "#EXTINF:-1 %s,%s\n", strings.Join(tags, " "), displayName)
 		fmt.Fprintln(w, streamURL)
 	}
 }

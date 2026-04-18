@@ -11,11 +11,14 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
+
+	bolt "go.etcd.io/bbolt"
 
 	"github.com/mcnairstudios/tvproxy-streams/pkg/scanner"
 )
+
+var bucketName = []byte("probes")
 
 func PathHash(path string) string {
 	h := sha256.Sum256([]byte(path))
@@ -43,31 +46,58 @@ type Info struct {
 }
 
 type Cache struct {
-	mu       sync.RWMutex
-	probes   map[string]*Info
-	cacheDir string
+	db *bolt.DB
 }
 
 func NewCache(cacheDir string) *Cache {
-	c := &Cache{
-		probes:   make(map[string]*Info),
-		cacheDir: cacheDir,
+	if cacheDir == "" {
+		cacheDir = os.TempDir()
 	}
-	c.loadFromDisk()
-	return c
+	os.MkdirAll(cacheDir, 0755)
+	dbPath := filepath.Join(cacheDir, "probes.db")
+	db, err := bolt.Open(dbPath, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	if err != nil {
+		log.Fatalf("failed to open probe database %s: %v", dbPath, err)
+	}
+	db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists(bucketName)
+		return err
+	})
+	log.Printf("probe cache: %s", dbPath)
+	return &Cache{db: db}
+}
+
+func (c *Cache) Close() {
+	if c.db != nil {
+		c.db.Close()
+	}
 }
 
 func (c *Cache) Get(path string) *Info {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.probes[path]
+	var info *Info
+	c.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(bucketName)
+		data := b.Get([]byte(path))
+		if data == nil {
+			return nil
+		}
+		var i Info
+		if json.Unmarshal(data, &i) == nil {
+			info = &i
+		}
+		return nil
+	})
+	return info
 }
 
 func (c *Cache) Set(path string, info *Info) {
-	c.mu.Lock()
-	c.probes[path] = info
-	c.mu.Unlock()
-	c.saveToDisk(path, info)
+	data, err := json.Marshal(info)
+	if err != nil {
+		return
+	}
+	c.db.Update(func(tx *bolt.Tx) error {
+		return tx.Bucket(bucketName).Put([]byte(path), data)
+	})
 }
 
 func (c *Cache) ProbeWorker(ctx context.Context, roots []scanner.ScanRoot, items func() []scanner.MediaItem) {
@@ -113,42 +143,6 @@ func resolveFullPath(roots []scanner.ScanRoot, relPath string) string {
 		}
 	}
 	return ""
-}
-
-func (c *Cache) loadFromDisk() {
-	if c.cacheDir == "" {
-		return
-	}
-	entries, err := os.ReadDir(c.cacheDir)
-	if err != nil {
-		return
-	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".json") {
-			continue
-		}
-		data, err := os.ReadFile(filepath.Join(c.cacheDir, e.Name()))
-		if err != nil {
-			continue
-		}
-		var info Info
-		if json.Unmarshal(data, &info) == nil {
-			key := strings.ReplaceAll(strings.TrimSuffix(e.Name(), ".json"), "_", "/")
-			c.probes[key] = &info
-		}
-	}
-}
-
-func (c *Cache) saveToDisk(path string, info *Info) {
-	if c.cacheDir == "" {
-		return
-	}
-	os.MkdirAll(c.cacheDir, 0755)
-	key := strings.ReplaceAll(strings.ReplaceAll(path, "/", "_"), "\\", "_")
-	data, _ := json.MarshalIndent(info, "", "  ")
-	os.WriteFile(filepath.Join(c.cacheDir, key+".json"), data, 0644)
 }
 
 type ffprobeOutput struct {
