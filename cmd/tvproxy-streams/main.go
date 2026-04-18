@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -54,6 +53,17 @@ func (l *Library) ETag() string {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 	return l.etag
+}
+
+func (l *Library) FindByID(id string) (scanner.MediaItem, bool) {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	for _, item := range l.items {
+		if probe.PathHash(item.Path) == id {
+			return item, true
+		}
+	}
+	return scanner.MediaItem{}, false
 }
 
 func (l *Library) ProbedCount() int {
@@ -269,16 +279,20 @@ func runServer(configDir string) {
 		playlist.ServeStatus(lib.Items(), lib.ProbedCount(), w)
 	})
 	mux.HandleFunc("/stream/", func(w http.ResponseWriter, r *http.Request) {
-		path := strings.TrimPrefix(r.URL.Path, "/stream/")
-		decoded, err := url.PathUnescape(path)
-		if err != nil || strings.Contains(decoded, "..") {
-			http.Error(w, "invalid path", http.StatusBadRequest)
+		id := strings.TrimPrefix(r.URL.Path, "/stream/")
+		if id == "" {
+			http.Error(w, "missing stream id", http.StatusBadRequest)
+			return
+		}
+		item, ok := lib.FindByID(id)
+		if !ok {
+			http.NotFound(w, r)
 			return
 		}
 		for _, root := range roots {
 			rootName := filepath.Base(root.Path)
-			if strings.HasPrefix(decoded, rootName+"/") {
-				full := filepath.Join(filepath.Dir(root.Path), decoded)
+			if strings.HasPrefix(item.Path, rootName+"/") {
+				full := filepath.Join(filepath.Dir(root.Path), item.Path)
 				if _, err := os.Stat(full); err == nil {
 					http.ServeFile(w, r, full)
 					return

@@ -30,6 +30,18 @@ func TestServeM3UMovie(t *testing.T) {
 	if !strings.Contains(body, "http://localhost:8090/stream/") {
 		t.Error("missing stream URL")
 	}
+	// Stream URL should use tvp-id hash, not URL-encoded path
+	id := probe.PathHash("movies/Film.mp4")
+	if !strings.Contains(body, "/stream/"+id) {
+		t.Error("stream URL should use tvp-id")
+	}
+	// EXTINF should not have bare display name after comma
+	if strings.Contains(body, ",Film\n") {
+		t.Error("EXTINF should not have bare display name after comma")
+	}
+	if !strings.Contains(body, `tvg-name="Film"`) {
+		t.Error("missing tvg-name")
+	}
 }
 
 func TestServeM3USeries(t *testing.T) {
@@ -55,6 +67,10 @@ func TestServeM3USeries(t *testing.T) {
 	}
 	if strings.Contains(body, "TV|") {
 		t.Error("group-title should NOT have TV| prefix")
+	}
+	// tvg-name should contain the formatted episode name
+	if !strings.Contains(body, `tvg-name="Show - S01E01 - Pilot"`) {
+		t.Error("tvg-name should contain formatted series episode name")
 	}
 }
 

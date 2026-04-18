@@ -3,7 +3,6 @@ package playlist
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/gavinmcnair/tvproxy-streams/pkg/probe"
@@ -17,11 +16,20 @@ func ServeM3U(items []scanner.MediaItem, probeCache *probe.Cache, baseURL string
 	fmt.Fprintln(w, "#EXTM3U")
 
 	for _, item := range items {
-		streamURL := baseURL + "/stream/" + url.PathEscape(item.Path)
+		itemID := probe.PathHash(item.Path)
+		streamURL := baseURL + "/stream/" + itemID
+
+		displayName := item.Name
+		if item.Type == scanner.TypeSeries && item.Season > 0 && item.Episode > 0 {
+			displayName = fmt.Sprintf("%s - S%02dE%02d", item.Series, item.Season, item.Episode)
+			if item.Name != "" && item.Name != item.Filename {
+				displayName += " - " + item.Name
+			}
+		}
 
 		var tags []string
-		tags = append(tags, fmt.Sprintf(`tvp-id="%s"`, probe.PathHash(item.Path)))
-		tags = append(tags, fmt.Sprintf(`tvg-name="%s"`, item.Name))
+		tags = append(tags, fmt.Sprintf(`tvp-id="%s"`, itemID))
+		tags = append(tags, fmt.Sprintf(`tvg-name="%s"`, displayName))
 		tags = append(tags, fmt.Sprintf(`tvp-type="%s"`, item.Type))
 
 		if item.Collection != "" {
@@ -87,15 +95,7 @@ func ServeM3U(items []scanner.MediaItem, probeCache *probe.Cache, baseURL string
 			}
 		}
 
-		displayName := item.Name
-		if item.Type == scanner.TypeSeries && item.Season > 0 && item.Episode > 0 {
-			displayName = fmt.Sprintf("%s - S%02dE%02d", item.Series, item.Season, item.Episode)
-			if item.Name != "" && item.Name != item.Filename {
-				displayName += " - " + item.Name
-			}
-		}
-
-		fmt.Fprintf(w, "#EXTINF:-1 %s,%s\n", strings.Join(tags, " "), displayName)
+		fmt.Fprintf(w, "#EXTINF:-1 %s\n", strings.Join(tags, " "))
 		fmt.Fprintln(w, streamURL)
 	}
 }
