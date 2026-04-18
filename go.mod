@@ -1,4 +1,4 @@
-module github.com/gavinmcnair/tvproxy-streams
+module github.com/mcnairstudios/tvproxy-streams
 
 go 1.22
 

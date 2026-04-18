@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gavinmcnair/tvproxy-streams/pkg/probe"
-	"github.com/gavinmcnair/tvproxy-streams/pkg/scanner"
+	"github.com/mcnairstudios/tvproxy-streams/pkg/probe"
+	"github.com/mcnairstudios/tvproxy-streams/pkg/scanner"
 )
 
 func TestServeM3UMovie(t *testing.T) {

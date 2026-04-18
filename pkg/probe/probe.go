@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gavinmcnair/tvproxy-streams/pkg/scanner"
+	"github.com/mcnairstudios/tvproxy-streams/pkg/scanner"
 )
 
 func PathHash(path string) string {

@@ -14,10 +14,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gavinmcnair/tvproxy-streams/pkg/mtls"
-	"github.com/gavinmcnair/tvproxy-streams/pkg/playlist"
-	"github.com/gavinmcnair/tvproxy-streams/pkg/probe"
-	"github.com/gavinmcnair/tvproxy-streams/pkg/scanner"
+	"github.com/mcnairstudios/tvproxy-streams/pkg/mtls"
+	"github.com/mcnairstudios/tvproxy-streams/pkg/playlist"
+	"github.com/mcnairstudios/tvproxy-streams/pkg/probe"
+	"github.com/mcnairstudios/tvproxy-streams/pkg/scanner"
 )
 
 type Library struct {

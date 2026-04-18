@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gavinmcnair/tvproxy-streams/pkg/probe"
-	"github.com/gavinmcnair/tvproxy-streams/pkg/scanner"
+	"github.com/mcnairstudios/tvproxy-streams/pkg/probe"
+	"github.com/mcnairstudios/tvproxy-streams/pkg/scanner"
 )
 
 func ServeM3U(items []scanner.MediaItem, probeCache *probe.Cache, baseURL string, w http.ResponseWriter) {

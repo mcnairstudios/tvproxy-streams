@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gavinmcnair/tvproxy-streams/pkg/scanner"
+	"github.com/mcnairstudios/tvproxy-streams/pkg/scanner"
 )
 
 func ServeJSON(items []scanner.MediaItem, w http.ResponseWriter, r *http.Request) {
