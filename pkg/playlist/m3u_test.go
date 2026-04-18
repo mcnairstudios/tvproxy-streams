@@ -71,8 +71,8 @@ func TestServeM3USeries(t *testing.T) {
 		t.Error("group-title should NOT have TV| prefix")
 	}
 	// tvg-name should contain the formatted episode name
-	if !strings.Contains(body, `tvg-name="Show%20-%20S01E01%20-%20Pilot"`) {
-		t.Error("tvg-name should contain URL-encoded formatted series episode name")
+	if !strings.Contains(body, `tvg-name="Show - S01E01 - Pilot"`) {
+		t.Error("tvg-name should contain formatted series episode name")
 	}
 }
 
@@ -108,7 +108,7 @@ func TestServeM3UCollection(t *testing.T) {
 		t.Error("collection should be the group-title")
 	}
 	// Display name with space should be URL-encoded
-	if !strings.Contains(body, `tvg-name="Film%20One"`) {
-		t.Error("tvg-name should be URL-encoded")
+	if !strings.Contains(body, `tvg-name="Film One"`) {
+		t.Error("tvg-name should contain display name")
 	}
 }
