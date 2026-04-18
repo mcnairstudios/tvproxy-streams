@@ -3,11 +3,16 @@ package playlist
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/mcnairstudios/tvproxy-streams/pkg/probe"
 	"github.com/mcnairstudios/tvproxy-streams/pkg/scanner"
 )
+
+func encodeTag(s string) string {
+	return url.PathEscape(s)
+}
 
 func ServeM3U(items []scanner.MediaItem, probeCache *probe.Cache, baseURL string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "audio/x-mpegurl")
@@ -29,34 +34,34 @@ func ServeM3U(items []scanner.MediaItem, probeCache *probe.Cache, baseURL string
 
 		var tags []string
 		tags = append(tags, fmt.Sprintf(`tvp-id="%s"`, itemID))
-		tags = append(tags, fmt.Sprintf(`tvg-name="%s"`, displayName))
+		tags = append(tags, fmt.Sprintf(`tvg-name="%s"`, encodeTag(displayName)))
 		tags = append(tags, fmt.Sprintf(`tvp-type="%s"`, item.Type))
 
 		if item.Collection != "" {
-			tags = append(tags, fmt.Sprintf(`tvp-collection="%s"`, item.Collection))
+			tags = append(tags, fmt.Sprintf(`tvp-collection="%s"`, encodeTag(item.Collection)))
 		}
 		if len(item.Tags) > 0 {
-			tags = append(tags, fmt.Sprintf(`tvp-tags="%s"`, strings.Join(item.Tags, ",")))
+			tags = append(tags, fmt.Sprintf(`tvp-tags="%s"`, encodeTag(strings.Join(item.Tags, ","))))
 		}
 
 		switch item.Type {
 		case scanner.TypeMovie:
-			tags = append(tags, fmt.Sprintf(`group-title="%s"`, item.Group))
+			tags = append(tags, fmt.Sprintf(`group-title="%s"`, encodeTag(item.Group)))
 		case scanner.TypeSeries:
-			tags = append(tags, fmt.Sprintf(`group-title="%s"`, item.Series))
-			tags = append(tags, fmt.Sprintf(`tvp-series="%s"`, item.Series))
+			tags = append(tags, fmt.Sprintf(`group-title="%s"`, encodeTag(item.Series)))
+			tags = append(tags, fmt.Sprintf(`tvp-series="%s"`, encodeTag(item.Series)))
 			if item.Season > 0 {
 				tags = append(tags, fmt.Sprintf(`tvp-season="%d"`, item.Season))
 			}
 			if item.SeasonName != "" {
-				tags = append(tags, fmt.Sprintf(`tvp-season-name="%s"`, item.SeasonName))
+				tags = append(tags, fmt.Sprintf(`tvp-season-name="%s"`, encodeTag(item.SeasonName)))
 			}
 			if item.Episode > 0 {
 				tags = append(tags, fmt.Sprintf(`tvp-episode="%d"`, item.Episode))
 			}
 		case scanner.TypeFiles:
 			if item.Group != "" {
-				tags = append(tags, fmt.Sprintf(`group-title="%s"`, item.Group))
+				tags = append(tags, fmt.Sprintf(`group-title="%s"`, encodeTag(item.Group)))
 			}
 		}
 
@@ -95,7 +100,7 @@ func ServeM3U(items []scanner.MediaItem, probeCache *probe.Cache, baseURL string
 			}
 		}
 
-		fmt.Fprintf(w, "#EXTINF:-1 %s,%s\n", strings.Join(tags, " "), displayName)
+		fmt.Fprintf(w, "#EXTINF:-1 %s,%s\n", strings.Join(tags, " "), encodeTag(displayName))
 		fmt.Fprintln(w, streamURL)
 	}
 }
